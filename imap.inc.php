@@ -4,7 +4,7 @@
  * PHP-written IMAP-library for easy usage
  *
  * @author Bailey Rud <info@bailey-rud.de>
- * @version 1.0
+ * @version 1.1
  */
 
 class SimpleIMAP {
@@ -47,6 +47,15 @@ class SimpleIMAP {
 			throw new \Exception("Connection to IMAP server failed!\n");
 			die(1);
 		}
+	}
+
+	/**
+	 * Disconnect from IMAP server
+	 */
+	public function disconnect() {
+		@imap_close($this->connection);
+		$this->inbox_count = 0;
+		$this->inbox = array();
 	}
 
 	/**
@@ -96,6 +105,31 @@ class SimpleIMAP {
 	public function getInbox($rebuild=false) {
 		if($rebuild !== false) $this->buildInbox();  // may take a long time
 		return $this->inbox;
+	}
+
+	/**
+	 * Get a single mail by index
+	 * @param int $index Mail-index from inbox
+	 */
+	public function get($index) {
+		if((int) $index > 0 && isset($this->inbox[$index])){
+			return $this->inbox[$index];
+		} else{
+			return $this->inbox;
+		}
+	}
+
+	/**
+	 * Move a single mail to a different folder by index
+	 * @param int $index Mail-index from inbox
+	 * @param string $folder The destination-folder
+	 * @param bool $rebuild Rebuild the local inbox after moving (default: true)
+	 */
+	public function move($index, $folder="INBOX", $rebuild=true) {
+		imap_mail_move($this->connection, (int) $index, $folder);
+		imap_expunge($this->connection);
+		// rebuild inbox if not disabled
+		if($rebuild !== false) $this->buildInbox();
 	}
 
 }
