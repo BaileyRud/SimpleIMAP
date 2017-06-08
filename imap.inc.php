@@ -4,7 +4,7 @@
  * PHP-written IMAP-library for easy usage
  *
  * @author Bailey Rud <info@bailey-rud.de>
- * @version 1.1
+ * @version 1.2
  */
 
 class SimpleIMAP {
@@ -37,7 +37,11 @@ class SimpleIMAP {
 	 * Connect to the IMAP server with configuration-data
 	 */
 	private function connect() {
-		$connection = imap_open("{".$this->server_host.":".$this->server_port.($this->server_ssl !== false ? "/ssl".($this->server_ssl_verify !== false ? "" : "/novalidate-cert") : "")."}", $this->server_user, $this->server_pass);
+		if($this->server_port == 143 && $this->server_ssl !== false){
+			$connection = imap_open("{".$this->server_host.":".$this->server_port.($this->server_ssl !== false ? "/tls".($this->server_ssl_verify !== false ? "" : "/novalidate-cert") : "")."}", $this->server_user, $this->server_pass);
+		} else{
+			$connection = imap_open("{".$this->server_host.":".$this->server_port.($this->server_ssl !== false ? "/ssl".($this->server_ssl_verify !== false ? "" : "/novalidate-cert") : "")."}", $this->server_user, $this->server_pass);
+		}
 		if($connection !== false){
 			$this->connection = $connection;
 			$this->inbox_count = imap_num_msg($connection);  // save number of messages
@@ -53,6 +57,7 @@ class SimpleIMAP {
 	 * Disconnect from IMAP server
 	 */
 	public function disconnect() {
+		@imap_expunge($this->connection);
 		@imap_close($this->connection);
 		$this->inbox_count = 0;
 		$this->inbox = array();
@@ -130,6 +135,50 @@ class SimpleIMAP {
 		imap_expunge($this->connection);
 		// rebuild inbox if not disabled
 		if($rebuild !== false) $this->buildInbox();
+	}
+
+	/**
+	 * Deletes a single mail
+	 * @param int $index Mail-index from inbox
+	 * @param bool $expunge Expunge after delete
+	 */
+	public function delete($index, $expunge=false) {
+		imap_delete($this->connection, (int) $index);
+		if($expunge !== false) imap_expunge($this->connection);
+	}
+
+	/**
+	 * Sets flags for a mail
+	 * @param int $index Mail-index from inbox
+	 * @param string $flag (\\Seen, \\Answered, \\Flagged, \\Draft)
+	 */
+	public function setFlag($index, $flag="\\Seen") {
+		imap_setflag_full($this->connection, $index, $flag);
+	}
+
+	/**
+	 * Unsets a given flag for a mail
+	 * @param int $index Mail-index from inbox
+	 * @param string $flag Flag to delete (\\Seen, \\Answered, \\Flagged, \\Draft)
+	 */
+	public function unsetFlag($index, $flag="\\Seen") {
+		imap_clearflag_full($this->connection, $index, $flag);
+	}
+
+	/**
+	 * Marks a mail as read
+	 * @param int $index Mail-index from inbox
+	 */
+	public function seen($index) {
+		$this->setFlag($index, "\\Seen");
+	}
+
+	/**
+	 * Marks a mail as unread
+	 * @param int $index Mail-index from inbox
+	 */
+	public function unseen($index) {
+		$this->unsetFlag($index, "\\Seen");
 	}
 
 }

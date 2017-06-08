@@ -1,4 +1,4 @@
-# SimpleIMAP v1.1
+# SimpleIMAP v1.2
 ## PHP written IMAP-library for easy usage
 
 SimpleIMAP is a very easy but functional IMAP client for PHP.  It contains the most functions needed to work with mailboxes.
@@ -8,8 +8,8 @@ SimpleIMAP is a very easy but functional IMAP client for PHP.  It contains the m
 - work's fine with bigger mailboxes, customizable timeout-value and caching
 - based on the php-imap class
 ### In Planing (coming next time)
-- flagging of mails (favorized mails, etc)
-- StartTLS support for port 143
+- sorting mails via imap_sort
+- quota management
 
 ### Example
 
